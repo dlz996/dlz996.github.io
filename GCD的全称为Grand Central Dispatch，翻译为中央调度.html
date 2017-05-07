@@ -1,0 +1,568 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.1" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content=",,," />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=5.1.1" />
+
+
+
+
+
+
+<meta name="description" content="GCD的全称为Grand Central Dispatch，翻译为中央调度GCD的特点  允许将一个程序切分为多个单一任务，然后提交到工作队列中并发或者串行地执行 为多核的并行运算提出了解决方案，自动合理的利用CPU内核（比如双核，四核） 自动的管理线程的生命周期（创建线程、调度任务、销毁线程），完全不需要我们管理，只需要告诉它任务是什么就行 配合Block，使得使用起来更加方便灵活    多线程">
+<meta name="keywords" content="GCD,多线程,同步与异步">
+<meta property="og:type" content="website">
+<meta property="og:title" content="多线程GCD之路(一)同步线程与异步线程">
+<meta property="og:url" content="http://www.donglizheng.com/GCD的全称为Grand Central Dispatch，翻译为中央调度.html">
+<meta property="og:site_name" content="青梅煮码">
+<meta property="og:description" content="GCD的全称为Grand Central Dispatch，翻译为中央调度GCD的特点  允许将一个程序切分为多个单一任务，然后提交到工作队列中并发或者串行地执行 为多核的并行运算提出了解决方案，自动合理的利用CPU内核（比如双核，四核） 自动的管理线程的生命周期（创建线程、调度任务、销毁线程），完全不需要我们管理，只需要告诉它任务是什么就行 配合Block，使得使用起来更加方便灵活    多线程">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2115270-89e867f79246233a.gif?imageMogr2/auto-orient/strip">
+<meta property="og:image" content="http://upload-images.jianshu.io/upload_images/2115270-0a61d12af28d6746.gif?imageMogr2/auto-orient/strip">
+<meta property="og:updated_time" content="2017-03-26T11:58:04.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="多线程GCD之路(一)同步线程与异步线程">
+<meta name="twitter:description" content="GCD的全称为Grand Central Dispatch，翻译为中央调度GCD的特点  允许将一个程序切分为多个单一任务，然后提交到工作队列中并发或者串行地执行 为多核的并行运算提出了解决方案，自动合理的利用CPU内核（比如双核，四核） 自动的管理线程的生命周期（创建线程、调度任务、销毁线程），完全不需要我们管理，只需要告诉它任务是什么就行 配合Block，使得使用起来更加方便灵活    多线程">
+<meta name="twitter:image" content="http://upload-images.jianshu.io/upload_images/2115270-89e867f79246233a.gif?imageMogr2/auto-orient/strip">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Muse',
+    sidebar: {"position":"left","display":"post","offset":12,"offset_float":0,"b2t":false,"scrollpercent":false},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://www.donglizheng.com/GCD的全称为Grand Central Dispatch，翻译为中央调度.html"/>
+
+
+
+
+
+  <title>多线程GCD之路(一)同步线程与异步线程 | 青梅煮码</title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left  ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">青梅煮码</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+  <header class="post-header">
+
+	<h1 class="post-title" itemprop="name headline">多线程GCD之路(一)同步线程与异步线程</h1>
+
+
+
+</header>
+
+    
+    
+      <h3 id="GCD的全称为Grand-Central-Dispatch，翻译为中央调度"><a href="#GCD的全称为Grand-Central-Dispatch，翻译为中央调度" class="headerlink" title="GCD的全称为Grand Central Dispatch，翻译为中央调度"></a>GCD的全称为Grand Central Dispatch，翻译为中央调度</h3><h4 id="GCD的特点"><a href="#GCD的特点" class="headerlink" title="GCD的特点"></a>GCD的特点</h4><blockquote>
+<ul>
+<li>允许将一个程序切分为多个单一任务，然后提交到工作队列中并发或者串行地执行</li>
+<li>为多核的并行运算提出了解决方案，自动合理的利用CPU内核（比如双核，四核）</li>
+<li>自动的管理线程的生命周期（创建线程、调度任务、销毁线程），完全不需要我们管理，只需要告诉它任务是什么就行</li>
+<li>配合Block，使得使用起来更加方便灵活</li>
+</ul>
+</blockquote>
+<hr>
+<h4 id="多线程运行本质"><a href="#多线程运行本质" class="headerlink" title="多线程运行本质"></a>多线程运行本质</h4><blockquote>
+<p>多线程的运行方式是进程在多个线程反复中跳转，多线程必定比单线程耗费时间，但是我们为什么要用多线程，单线程难道不好吗？</p>
+<blockquote>
+<p>单线程的时候，如果需要处理一个耗时操作，那么这个线程需要处理完这个耗时操作之后，才会进行下一个操作，这样在前端看，不能响应用户触发的事件，是极差的体验</p>
+<blockquote>
+<p>而多线程的时候，耗时操作可以放在子线程中去处理，这样主线程不会因为处理耗时操作而造成卡顿</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<h4 id="进程-amp-线程"><a href="#进程-amp-线程" class="headerlink" title="进程&amp;线程"></a>进程&amp;线程</h4><ul>
+<li><h5 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h5><p> 每个APP有且有一个进程，一个进程至少包含一个线程，这个线程是main线程，也就是主线程，也可以同时包含多个子线程，其中子线程可以处理耗时操作</p>
+</li>
+<li><h5 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h5><p>线程是依赖于进程进行，子线程主要用来处理一些耗时操作，主线程一般用于刷新UI和页面的跳转，将耗时操作放到子线程中的好处就是可以分担掉主线程的耗时操作，防止UI卡顿事件的发生，同时，线程又分同步线程和异步线程</p>
+</li>
+</ul>
+<h4 id="同步线程-amp-异步线程"><a href="#同步线程-amp-异步线程" class="headerlink" title="同步线程&amp;异步线程"></a>同步线程&amp;异步线程</h4><blockquote>
+<p>同步和异步的概念对于很多人来说是一个模糊的概念，是一种似乎只能意会不能言传的东西。其实我们的生活中存在着很多同步异步的例子。比如：你叫我去吃饭，我听到了就立刻和你去吃饭，如果我们有听到，你就会一直叫我，直到我听见和你一起去吃饭，这个过程叫同步；异步过程指你叫我去吃饭，然后你就去吃饭了，而不管我是否和你一起去吃饭。而我得到消息后可能立即就走，也可能过段时间再走，并不影响你自己去吃饭</p>
+<blockquote>
+<p>同步线程就是在当前线程中执行任务，而异步线程是创建一个新的线程去执行任务</p>
+</blockquote>
+</blockquote>
+<ul>
+<li><h5 id="同步线程"><a href="#同步线程" class="headerlink" title="同步线程"></a>同步线程</h5><p>这个线程结束之后，才可以执行下一线程操作 </p><p style="background-color:gray;">这样处理在前端展示出来的效果不太理想，容易被用户理解为APP卡死，而且对于前端来说，视觉的效果和页面的流畅是最主要的</p><p></p>
+</li>
+<li><h5 id="异步线程"><a href="#异步线程" class="headerlink" title="异步线程"></a>异步线程</h5><p>开辟一个新的线程，去执行线程任务，不影响主线程的运行，GCD中线层任务放在block中，GCD不需要管理线程，当线程内任务运行完毕后，自动结束线程</p>
+</li>
+</ul>
+<h4 id="同步-amp-异步使用场景"><a href="#同步-amp-异步使用场景" class="headerlink" title="同步&amp;异步使用场景"></a>同步&amp;异步使用场景</h4><ul>
+<li><h5 id="同步"><a href="#同步" class="headerlink" title="同步"></a>同步</h5>当多个线程访问同一个对象的时候，使用同步线程，否则可能会出现不安全的情况，比如数据的错乱。当然我们也可以用线程锁来控制。</li>
+<li><h5 id="异步"><a href="#异步" class="headerlink" title="异步"></a>异步</h5>只有一个线程访问当前的数据的时候，使用异步操作，或者处理耗时操作的时候，使用异步线程</li>
+</ul>
+<h4 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h4><ul>
+<li><h5 id="异步使用"><a href="#异步使用" class="headerlink" title="异步使用"></a>异步使用</h5>先看代码</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"> NSLog(@&quot;1&quot;);</div><div class="line">  dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^&#123;</div><div class="line">//这里使线程睡眠，来模拟耗时操作</div><div class="line">        sleep(2);</div><div class="line">        NSLog(@&quot;2&quot;);</div><div class="line">    &#125;);</div><div class="line">    NSLog(@&quot;3&quot;);</div></pre></td></tr></table></figure>
+<p>再来看控制台打印</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2017-03-26 17:28:39.442 GCD[16223:2440010] 1</div><div class="line">2017-03-26 17:28:39.445 GCD[16223:2440010] 3</div><div class="line">2017-03-26 17:28:41.517 GCD[16223:2440182] 2</div></pre></td></tr></table></figure>
+<p>再看下GIF效果图来看一下<br><img src="http://upload-images.jianshu.io/upload_images/2115270-89e867f79246233a.gif?imageMogr2/auto-orient/strip" alt=""><br>可以看出来，先打印了1，3然后打印了2，也就是说，耗时的线程的操作，并没有影响别的线程的运行</p>
+<hr>
+<ul>
+<li><h5 id="同步使用"><a href="#同步使用" class="headerlink" title="同步使用"></a>同步使用</h5></li>
+</ul>
+<p>先看代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">  NSLog(@&quot;1&quot;);</div><div class="line">    dispatch_sync(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^&#123;</div><div class="line">//同样使线程睡眠来模拟耗时操作</div><div class="line">        sleep(2);</div><div class="line">        NSLog(@&quot;2&quot;);</div><div class="line">    &#125;);</div><div class="line">    NSLog(@&quot;3&quot;);</div></pre></td></tr></table></figure>
+<p>再来看控制台打印</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">2017-03-26 18:14:56.711 GCD[16968:2472069] 1</div><div class="line">2017-03-26 18:14:58.765 GCD[16968:2472069] 2</div><div class="line">2017-03-26 18:14:58.766 GCD[16968:2472069] 3</div></pre></td></tr></table></figure>
+<p>再看下GIF效果图<br><img src="http://upload-images.jianshu.io/upload_images/2115270-0a61d12af28d6746.gif?imageMogr2/auto-orient/strip" alt=""><br>通过GIF图可以看出来，控制台在打印完1之后，有明显的卡顿现象，此时如果前端有触发事件的时候，也会没有响应的</p>
+<h3 id="参数类型："><a href="#参数类型：" class="headerlink" title="参数类型："></a>参数类型：</h3><h4 id="long-identifier：告诉队列执行任务的“服务质量-quality-of-service”，系统提供的参数有："><a href="#long-identifier：告诉队列执行任务的“服务质量-quality-of-service”，系统提供的参数有：" class="headerlink" title="long identifier：告诉队列执行任务的“服务质量 quality of service”，系统提供的参数有："></a>long identifier：告诉队列执行任务的“服务质量 quality of service”，系统提供的参数有：</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">iOS 8.0 之后 优先级     </div><div class="line">     QOS_CLASS_USER_INTERACTIVE 0x21,              用户交互(希望尽快完成，用户对结果很期望，不要放太耗时操作)</div><div class="line">     QOS_CLASS_USER_INITIATED 0x19,                用户期望(不要放太耗时操作)</div><div class="line">     QOS_CLASS_DEFAULT 0x15,                        默认(不是给程序员使用的，用来重置对列使用的)</div><div class="line">     QOS_CLASS_UTILITY 0x11,                        实用工具(耗时操作，可以使用这个选项)</div><div class="line">     QOS_CLASS_BACKGROUND 0x09,                     后台</div><div class="line">     QOS_CLASS_UNSPECIFIED 0x00,                    未指定</div><div class="line">iOS 7.0 之前 优先级</div><div class="line">     DISPATCH_QUEUE_PRIORITY_HIGH 2                 高优先级</div><div class="line">     DISPATCH_QUEUE_PRIORITY_DEFAULT 0              默认优先级</div><div class="line">     DISPATCH_QUEUE_PRIORITY_LOW (-2)               低优先级</div><div class="line">     DISPATCH_QUEUE_PRIORITY_BACKGROUND INT16_MIN  后台优先级</div></pre></td></tr></table></figure>
+<h4 id="unsigned-long-flags：苹果官方文档是这样解释的：-Flags-that-are-reserved-for-future-use。标记是为了未来使用保留的！所以这个参数应该永远指定为0"><a href="#unsigned-long-flags：苹果官方文档是这样解释的：-Flags-that-are-reserved-for-future-use。标记是为了未来使用保留的！所以这个参数应该永远指定为0" class="headerlink" title="unsigned long flags：苹果官方文档是这样解释的： Flags that are reserved for future use。标记是为了未来使用保留的！所以这个参数应该永远指定为0"></a>unsigned long flags：苹果官方文档是这样解释的： Flags that are reserved for future use。标记是为了未来使用保留的！所以这个参数应该永远指定为0</h4><p>   如果做ios8.0与ios7.0的适配，可以这样创建全局队列：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">dispatch_sync(dispatch_get_global_queue(0, 0), ^&#123;</div><div class="line">        </div><div class="line"></div><div class="line">    &#125;);</div></pre></td></tr></table></figure></p>
+<p>本次测试使用的是全局队列，关于队列会在下一篇文章中为大家解答！</p>
+
+    
+  </div>
+
+
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+
+      <section class="site-overview sidebar-panel sidebar-panel-active">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="http://oi9q5yug6.bkt.clouddn.com/%E5%B1%8F%E5%B9%95%E5%BF%AB%E7%85%A7%202017-03-20%20%E4%B8%8B%E5%8D%887.38.20.png"
+               alt="董立峥" />
+          <p class="site-author-name" itemprop="name">董立峥</p>
+           
+              <p class="site-description motion-element" itemprop="description">我与我周旋久，宁做我！</p>
+          
+        </div>
+        <nav class="site-state motion-element">
+
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">0</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2017</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">董立峥</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Muse
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.1"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.1"></script>
+
+
+
+  
+  
+
+  
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.1"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
